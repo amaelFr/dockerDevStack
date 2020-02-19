@@ -1,0 +1,84 @@
+version: "3"
+services:
+    debug:
+        build:
+            context: ./debug
+            dockerfile : Dockerfile
+            args:
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+        restart: always
+        container_name: debug_container_${STACK_NAME}
+        volumes:
+            - ${CODE_PATH}/back:/usr/src/app
+        # links:
+        #     - codium
+        networks:
+            - backend   
+        privileged: true
+        ports:
+            - 8080:3000
+    prod:
+        build:
+            context: ./prod
+            dockerfile : Dockerfile
+            args:
+                CODE_PATH: ${CODE_PATH}/back
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+        restart: always
+        container_name: prod_container_${STACK_NAME}
+        networks:
+            - backend   
+        privileged: true
+        ports:
+            - 8080:3000
+    vscode:
+        build:
+            context: ./
+            dockerfile : ../vscode/Dockerfile
+            args:
+                CONF: code_conf
+                INSTALL_ROOT: npm -g i express-generator && if [ "${TYPE_SCRIPT}" = "1" ]; then npm install -g express-generator-typescript; npm install -g typescript; fi
+                INSTALL_USER: 
+                PATH_OPEN: ${PATH_OPEN}
+                WEB_APP: 1
+                FRONT_JS_FRAMEWORK: ${FRONT_JS_FRAMEWORK}
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+                UID: ${HOST_UID}
+                GID: ${HOST_GID}
+        container_name: vscode_container_${STACK_NAME}
+        hostname: code_debugjs
+        # links:
+        #     - debug
+        networks:
+            - backend
+        environment:
+            - DISPLAY=${DISPLAY}
+        volumes:
+            - ${CODE_PATH}:/home/${USERNAME}/code
+            - /tmp/.X11-unix:/tmp/.X11-unix
+        privileged: true #to fork
+    front-dev:
+        build:
+            context: ./..
+            dockerfile: front-jsframework/dev/Dockerfile
+        container_name: front-dev_container_${STACK_NAME}
+        restart: always
+        ports:
+            - 8081:3000
+        volumes:
+            - ${CODE_PATH}/front:/usr/src/app
+
+    database:
+        image: mongo
+        container_name: mongo_${PROJECT_NAME}_${HOST_UID}
+        volumes:
+            - ${DUMP}:/data/db
+            # - data:/data/db
+        networks:
+            - backend
+
+# volumes:
+#     persistent:
+#       data:
+networks:
+    backend:

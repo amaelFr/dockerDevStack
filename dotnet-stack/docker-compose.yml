@@ -1,0 +1,67 @@
+version: "3"
+services:
+    # debug:
+    #     build:
+    #         context: .
+    #         dockerfile : debug/Dockerfile
+        
+    #     restart: always
+    #     container_name: debug_container_${PROJECT_NAME}_${HOST_UID}
+    #     volumes:
+    #         - ${CODE_PATH}/back:/usr/src/app
+    #     # links:
+    #     #     - codium
+    #     networks:
+    #         - backend
+    #     privileged: true
+    #     # ports:
+    #     #     - 80:80
+    vscode:
+        build:
+            context: .
+            dockerfile : ../vscode/Dockerfile
+            args:
+                IMG: "mcr.microsoft.com/dotnet/core/sdk:${IMG_SDK}"
+                CONF: code_conf
+                INSTALL_ROOT:
+                #npm -g i express-generator
+                INSTALL_USER: curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l ~/vsdbg
+                PATH_OPEN: ${PATH_OPEN}
+                WEB_APP: ${WEB_APP}
+                FRONT_JS_FRAMEWORK: ${FRONT_JS_FRAMEWORK}
+        container_name: code_container_${PROJECT_NAME}_${HOST_UID}
+        hostname: code_.net
+        # links:
+        #     - debug
+        networks:
+            - backend
+        environment:
+            - DISPLAY=${DISPLAY}
+        volumes:
+            - ${CODE_PATH}:/home/${USERNAME}/code
+            - /tmp/.X11-unix:/tmp/.X11-unix
+        privileged: true #to fork
+    front-dev:
+        build:
+            context: ./..
+            dockerfile: front-jsframework/dev/Dockerfile
+        restart: always
+        ports:
+            - "3000:3000"
+        volumes:
+            - ${CODE_PATH}/front:/usr/src/app
+
+    database:
+        image: mongo
+        container_name: mongo_${PROJECT_NAME}_${HOST_UID}
+        volumes:
+            - ${DUMP}:/data/db
+            # - data:/data/db
+        networks:
+            - backend
+
+# volumes:
+#     persistent:
+#       data:
+networks:
+    backend:

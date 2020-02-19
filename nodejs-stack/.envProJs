@@ -1,0 +1,11 @@
+PROJECT_NAME=TEST
+CODE_PATH=/home/x1/Documents/code/js/cours/exam/meteo/code
+#path to code
+DUMP=/home/x1/Documents/code/js/cours/exam/meteo/database
+#path to database save
+USERNAME=developer
+WEB_APP=1
+FRONT_JS_FRAMEWORK=
+TYPE_SCRIPT=1
+#use web container or screen container
+PATH_OPEN=back/ front/
