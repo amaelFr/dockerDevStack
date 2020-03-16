@@ -123,7 +123,7 @@ rebuild:
 
 up: service log
 
-restart: down up
+restart: stop up
 
 service:
 	$(call call_docker,up,$(SERVICE_TARGET))
@@ -134,7 +134,8 @@ log:
 stop:
 	$(call call_docker,stop,$(SERVICE_TARGET))
 
-down: clean
+down:
+	$(call call_docker,down,)
 
 run:
 ifeq ($(SERVICE_TARGET),)

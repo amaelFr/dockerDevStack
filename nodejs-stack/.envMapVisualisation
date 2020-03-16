@@ -1,14 +1,14 @@
-PROJECT_NAME=SupWeather
-CODE_PATH=/home/x1/Documents/code/ts/cours/exam/supweather/code
+PROJECT_NAME=MapVisualisation
+CODE_PATH=/home/x1/Documents/code/ts/mapVisualisation/code
 #path to code
-DUMP=/home/x1/Documents/code/ts/cours/exam/supweather/database
+DUMP=/home/x1/Documents/code/ts/mapVisualisation/dump
 #path to database save
 USERNAME=developer
 WEB_APP=1
 FRONT_JS_FRAMEWORK=1
 TYPE_SCRIPT=1
 #use web container or screen container
-PATH_OPEN=back/ front/
+PATH_OPEN=front/
 BACKEND_WORKDIR=back/
 DB_NAME=SupWeather
 DB_USER=SupWeather

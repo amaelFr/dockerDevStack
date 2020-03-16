@@ -41,13 +41,13 @@ ARG WEB_APP="0"
 
 ARG FRONT_JS_FRAMEWORK="0"
 
-RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ]; then curl -sL https://deb.nodesource.com/setup_13.x | bash && apt-get install nodejs -y && npm install -g eslint; fi
+RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ]; then curl -sL https://deb.nodesource.com/setup_13.x | bash && apt-get install nodejs -y && npm install -g --force eslint; fi
 
-RUN if [ "$FRONT_JS_FRAMEWORK" = "1" ]; then npm install -g npx @angular/cli @vue/cli --loglevel=error; fi
+RUN if [ "$FRONT_JS_FRAMEWORK" = "1" ]; then npm install -g npx @angular/cli @vue/cli --loglevel=error --force; fi
 
 ARG TYPE_SCRIPT="0"
 
-RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then npm install -g typescript; fi
+RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then npm install --force -g typescript; fi
 
 ARG CONF=conf
 
