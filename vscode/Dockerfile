@@ -1,4 +1,4 @@
-ARG IMG=ubuntu
+ARG IMG=ubuntu:bionic
 
 FROM ${IMG}
 

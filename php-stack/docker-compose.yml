@@ -1,0 +1,117 @@
+version: "3"
+services:
+    # debug-nginx:
+    #     build:
+    #         context: ./debug
+    #         dockerfile: Dockerfile
+    #         args:
+    #             TYPE_SCRIPT: ${TYPE_SCRIPT}
+    #             BACKEND_WORKDIR: ${BACKEND_WORKDIR}
+    #     restart: always
+    #     container_name: debug_container_${STACK_NAME}
+    #     volumes:
+    #         - ${CODE_PATH}:/usr/src/app
+    #     # links:
+    #     #     - codium
+    #     networks:
+    #         - backend
+    #     privileged: true
+    #     ports:
+    #         - 8080:3000
+    debug:
+        build:
+            context: ./debug
+            dockerfile: Dockerfile
+            args:
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+                BACKEND_WORKDIR: ${BACKEND_WORKDIR}
+        restart: always
+        container_name: debug-php_container_${STACK_NAME}
+        environment:
+            XDEBUG_CONFIG: "remote_enable=1 remote_host=vscode_container_${STACK_NAME} remote_port=9000 idekey=VSCODE remote_autostart=1 xdebug.remote_connect_back=1"
+        volumes:
+            - ${CODE_PATH}/${PHP_PATH}:/var/www/html
+        # links:
+        #     - codium
+        networks:
+            - backend
+        privileged: true
+        ports:
+            - 8080:80
+    prod:
+        build:
+            context: ./prod
+            dockerfile: Dockerfile
+            args:
+                CODE_PATH: ${CODE_PATH}/back
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+        restart: always
+        container_name: prod_container_${STACK_NAME}
+        networks:
+            - backend
+        privileged: true
+        ports:
+            - 8080:3000
+    vscode:
+        build:
+            context: ./
+            dockerfile: ../vscode/Dockerfile
+            args:
+                CONF: code_conf
+                INSTALL_ROOT: apt install -y wget php-cli php-zip unzip curl && curl -sS https://getcomposer.org/installer |php && mv composer.phar /usr/local/bin/composer && chmod +x /usr/local/bin/composer
+                INSTALL_USER:
+                PATH_OPEN: ${PATH_OPEN}
+                WEB_APP: 1
+                FRONT_JS_FRAMEWORK: ${FRONT_JS_FRAMEWORK}
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+                UID: ${HOST_UID}
+                GID: ${HOST_GID}
+        container_name: vscode_container_${STACK_NAME}
+        hostname: vscode_php
+        # links:
+        #     - debug
+        networks:
+            - backend
+        environment:
+            - DISPLAY=${DISPLAY}
+            - DEBUGHOST=debug-php_container_${STACK_NAME}
+        volumes:
+            - ${CODE_PATH}:/home/${USERNAME}/code
+            - /tmp/.X11-unix:/tmp/.X11-unix
+        privileged: true #to fork
+    # front-dev:
+    #     build:
+    #         context: ./..
+    #         dockerfile: front-jsframework/dev/Dockerfile
+    #     container_name: front-dev_container_${STACK_NAME}
+    #     restart: always
+    #     ports:
+    #         - 8081:3000
+    #         - 8082:4000
+    #         - 3000:8081
+    #     volumes:
+    #         - ${CODE_PATH}/front:/usr/src/app
+    #     networks:
+    #         - backend
+
+    # database:
+    #     image: mongo
+    #     container_name: mongo_${PROJECT_NAME}_${HOST_UID}
+    #     volumes:
+    #         - ${DUMP}:/data/db
+    #         # - data:/data/db
+    #     networks:
+    #         - backend
+    #     restart: always
+    #     environment:
+    #         MONGO_INITDB_DATABASE: ${DB_NAME}
+    #         MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+    #         MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+    #     volumes:
+    #         - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+# volumes:
+#     persistent:
+#       data:
+networks:
+    backend:

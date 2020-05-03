@@ -67,6 +67,7 @@ services:
         ports:
             - 8081:3000
             - 8082:4000
+            - 3000:8081
         volumes:
             - ${CODE_PATH}/front:/usr/src/app
         networks:
