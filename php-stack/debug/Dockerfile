@@ -1,4 +1,4 @@
-FROM php:apache
+FROM php:fpm
 
 RUN pecl install xdebug
 

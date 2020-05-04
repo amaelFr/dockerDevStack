@@ -49,7 +49,7 @@ ifeq ($(PROJECT_NAME),)
 PROJECT_NAME = $$(dirname $(PROJECT_NAME))
 endif
 
-UP_ARG = debug vscode
+UP_ARG = debug vscode nginx
 
 ifeq ($(FRONT_JS_FRAMEWORK),1)
 UP_ARG += front-dev

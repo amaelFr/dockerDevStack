@@ -1,64 +1,48 @@
 version: "3"
 services:
-    # debug-nginx:
-    #     build:
-    #         context: ./debug
-    #         dockerfile: Dockerfile
-    #         args:
-    #             TYPE_SCRIPT: ${TYPE_SCRIPT}
-    #             BACKEND_WORKDIR: ${BACKEND_WORKDIR}
-    #     restart: always
-    #     container_name: debug_container_${STACK_NAME}
-    #     volumes:
-    #         - ${CODE_PATH}:/usr/src/app
-    #     # links:
-    #     #     - codium
-    #     networks:
-    #         - backend
-    #     privileged: true
-    #     ports:
-    #         - 8080:3000
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+            args:
+                BACKEND_WORKDIR: ${BACKEND_WORKDIR}
+        restart: always
+        container_name: nginx_container_${STACK_NAME}
+        environment:
+            phpfpmcontainer: debug_container_${STACK_NAME}
+        volumes:
+            - ${CODE_PATH}/${PHP_PATH}:/var/www/html
+        # links:
+        #     - debug
+        networks:
+            - backend
+        depends_on:
+            - debug
+        privileged: true
+        ports:
+            - 8080:80
     debug:
         build:
             context: ./debug
             dockerfile: Dockerfile
             args:
-                TYPE_SCRIPT: ${TYPE_SCRIPT}
                 BACKEND_WORKDIR: ${BACKEND_WORKDIR}
         restart: always
-        container_name: debug-php_container_${STACK_NAME}
+        container_name: debug_container_${STACK_NAME}
         environment:
             XDEBUG_CONFIG: "remote_enable=1 remote_host=vscode_container_${STACK_NAME} remote_port=9000 idekey=VSCODE remote_autostart=1 xdebug.remote_connect_back=1"
         volumes:
             - ${CODE_PATH}/${PHP_PATH}:/var/www/html
-        # links:
-        #     - codium
         networks:
             - backend
         privileged: true
-        ports:
-            - 8080:80
-    prod:
-        build:
-            context: ./prod
-            dockerfile: Dockerfile
-            args:
-                CODE_PATH: ${CODE_PATH}/back
-                TYPE_SCRIPT: ${TYPE_SCRIPT}
-        restart: always
-        container_name: prod_container_${STACK_NAME}
-        networks:
-            - backend
-        privileged: true
-        ports:
-            - 8080:3000
     vscode:
         build:
             context: ./
             dockerfile: ../vscode/Dockerfile
             args:
                 CONF: code_conf
-                INSTALL_ROOT: apt install -y wget php-cli php-zip unzip curl && curl -sS https://getcomposer.org/installer |php && mv composer.phar /usr/local/bin/composer && chmod +x /usr/local/bin/composer
+                INSTALL_ROOT: apt install -y wget php-cli php-zip unzip curl && curl -sS https://getcomposer.org/installer |php && mv composer.phar /usr/local/bin/composer && chmod +x /usr/local/bin/composer &&  curl -sS https://get.symfony.com/cli/installer | bash
                 INSTALL_USER:
                 PATH_OPEN: ${PATH_OPEN}
                 WEB_APP: 1
@@ -74,7 +58,7 @@ services:
             - backend
         environment:
             - DISPLAY=${DISPLAY}
-            - DEBUGHOST=debug-php_container_${STACK_NAME}
+            - DEBUGHOST=debug_container_${STACK_NAME}
         volumes:
             - ${CODE_PATH}:/home/${USERNAME}/code
             - /tmp/.X11-unix:/tmp/.X11-unix
