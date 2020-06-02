@@ -6,7 +6,9 @@ if [ "$1" = "1" ]; then
 
 fi
 
-apt install -y libzip-dev zip unzip
+docker-php-ext-install xml
+
+apt install -y libzip-dev zip unzip php-xml
 
 curl -sS https://getcomposer.org/installer | php
 
