@@ -9,15 +9,18 @@ services:
         restart: always
         container_name: nginx_container_${STACK_NAME}
         environment:
-            phpfpmcontainer: debug_container_${STACK_NAME}
+            PHPFPM: debug_container_${STACK_NAME}
+            PHPROOT: ${PHPROOT}
+            MYSQL: mysql_container_${STACK_NAME}
+            REDIRECTINDEX: ${REDIRECTINDEX}
         volumes:
             - ${CODE_PATH}/${PHP_PATH}:/var/www/html
-        # links:
-        #     - debug
-        networks:
-            - backend
-        depends_on:
+        links:
             - debug
+        # networks:
+        #     - backend
+        # depends_on:
+        #     - debug
         privileged: true
         ports:
             - 8080:80
@@ -27,23 +30,27 @@ services:
             dockerfile: Dockerfile
             args:
                 BACKEND_WORKDIR: ${BACKEND_WORKDIR}
+                MYSQL: ${MYSQL}
         restart: always
         container_name: debug_container_${STACK_NAME}
         environment:
             XDEBUG_CONFIG: "remote_enable=1 remote_host=vscode_container_${STACK_NAME} remote_port=9000 idekey=VSCODE remote_autostart=1 xdebug.remote_connect_back=1"
         volumes:
             - ${CODE_PATH}/${PHP_PATH}:/var/www/html
-        networks:
-            - backend
+        links:
+            - mysql
+        # networks:
+        #     - backend
         privileged: true
     vscode:
         build:
-            context: ./
-            dockerfile: ../vscode/Dockerfile
+            context: ./vscode
+            dockerfile: ../../vscode/Dockerfile
             args:
-                CONF: code_conf
-                INSTALL_ROOT: apt install -y wget php-cli php-zip unzip curl && curl -sS https://getcomposer.org/installer |php && mv composer.phar /usr/local/bin/composer && chmod +x /usr/local/bin/composer &&  curl -sS https://get.symfony.com/cli/installer | bash
-                INSTALL_USER:
+                IMG: php:fpm
+                # CONF: conf
+                RUN_ROOT: bash run_root.sh ${MYSQL}
+                RUN_USER:
                 PATH_OPEN: ${PATH_OPEN}
                 WEB_APP: 1
                 FRONT_JS_FRAMEWORK: ${FRONT_JS_FRAMEWORK}
@@ -52,13 +59,16 @@ services:
                 GID: ${HOST_GID}
         container_name: vscode_container_${STACK_NAME}
         hostname: vscode_php
-        # links:
-        #     - debug
-        networks:
-            - backend
+        links:
+            - debug
+            - mysql
+        # networks:
+        #     - backend
         environment:
-            - DISPLAY=${DISPLAY}
-            - DEBUGHOST=debug_container_${STACK_NAME}
+            DISPLAY: ${DISPLAY}
+            DEBUGHOST: debug_container_${STACK_NAME}
+            PATH_OPEN: ${PATH_OPEN}
+            MYSQL: mysql_container_${STACK_NAME}
         volumes:
             - ${CODE_PATH}:/home/${USERNAME}/code
             - /tmp/.X11-unix:/tmp/.X11-unix
@@ -78,22 +88,19 @@ services:
     #     networks:
     #         - backend
 
-    # database:
-    #     image: mongo
-    #     container_name: mongo_${PROJECT_NAME}_${HOST_UID}
-    #     volumes:
-    #         - ${DUMP}:/data/db
-    #         # - data:/data/db
-    #     networks:
-    #         - backend
-    #     restart: always
-    #     environment:
-    #         MONGO_INITDB_DATABASE: ${DB_NAME}
-    #         MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
-    #         MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
-    #     volumes:
-    #         - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-
+    mysql:
+        image: mysql
+        container_name: mysql_container_${STACK_NAME}
+        volumes:
+            - ${DUMP}:/data/db
+        # networks:
+        #     - backend
+        restart: always
+        environment:
+            - MYSQL_ROOT_PASSWORD=rootpasswd
+            - MYSQL_DATABASE=database
+            - MYSQL_USER=user
+            - MYSQL_PASSWORD=passwd
 # volumes:
 #     persistent:
 #       data:

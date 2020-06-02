@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update -y ; apt upgrade -y ; 
 
-RUN apt install -y software-properties-common apt-transport-https curl wget git
+RUN apt install -y software-properties-common apt-transport-https wget curl git gnupg2
 
 RUN wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | apt-key add - 
 
@@ -14,9 +14,10 @@ RUN echo 'deb https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/repos/deb
 
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 
-RUN add-apt-repository \
+RUN release=$(lsb_release -cs); if [ "${release}" = "buster" ];then release="bionic"; fi && \
+   add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
+   ${release} \
    stable"
 
 RUN apt update
@@ -49,7 +50,7 @@ ARG TYPE_SCRIPT="0"
 
 RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then npm install --force -g typescript; fi
 
-ARG CONF=conf
+ARG CONF=./conf
 
 COPY $CONF /tmp/conf
 
@@ -61,6 +62,16 @@ RUN if [ "$FRONT_JS_FRAMEWORK" = "1" -a -f /tmp/conf/packagesJsFram ]; then cat 
 
 RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then cat /tmp/conf/packagesWeb >> /tmp/conf/packages ; fi
 
+COPY ./run_root.sh run_root.sh
+
+ARG RUN_ROOT=""
+
+RUN if [ "$RUN_ROOT" = "" ]; then bash run_root.sh; else $RUN_ROOT; fi
+
+RUN rm run_root.sh
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER ${USERNAME}
 
 RUN if [ -f /tmp/conf/keybindings.json ]; then cp /tmp/conf/keybindings.json /home/${USERNAME}/.config/Code/User/; fi
@@ -71,21 +82,19 @@ USER root
 
 RUN rm -rf /tmp/conf
 
-ARG INSTALL_ROOT=""
-
-RUN eval $INSTALL_ROOT
-
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
 USER ${USERNAME}
 
-ARG INSTALL_USER=
+COPY --chown=${USERNAME} ./run_user.sh run_user.sh
 
-RUN eval $INSTALL_USER
+ARG RUN_USER=""
 
-ARG PATH_OPEN=.
+RUN if [ "$RUN_USER" = "" ]; then bash run_user.sh; else $RUN_USER; fi
 
-ENV PATH_OPEN=$PATH_OPEN
+USER root
+
+RUN rm run_user.sh
+
+USER ${USERNAME}
 
 ARG DEBUG_CONTAINER="debug_container"
 

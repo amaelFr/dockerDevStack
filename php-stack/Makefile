@@ -41,7 +41,6 @@ include $(ENV_FILE)
 
 
 ifeq ($(CODE_PATH),)
-$(info $(CODE_PATH))
 $(error Your ENV file must have a code path variable CODE_PATH=)
 endif
 
@@ -56,10 +55,21 @@ UP_ARG += front-dev
 WEB_APP=1
 endif
 
+ifeq ($(MYSQL),1)
+ifeq ($(OTHERDB),1)
+
+$(error You must inter only one database)
+endif
+endif
+
 ifeq ($(DUMP),)
 DUMP=/tmp/dump
-else
-UP_ARG += database
+endif
+
+$(info $(DUMP))
+
+ifeq ($(MYSQL),1)
+UP_ARG += mysql
 endif
 
 ifeq ($(USERNAME),)
