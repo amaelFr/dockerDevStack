@@ -4,13 +4,17 @@ FROM ${IMG}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV LC_ALL=C.UTF-8
+
+ENV LANG=C.UTF-8
+
 RUN apt update -y ; apt upgrade -y ; 
 
-RUN apt install -y software-properties-common apt-transport-https wget curl git gnupg2
+RUN apt install -y software-properties-common apt-transport-https wget curl git gnupg2 sudo
 
-RUN wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | apt-key add - 
+RUN wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | apt-key add -
 
-RUN echo 'deb https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/repos/debs/ vscodium main' >> /etc/apt/sources.list.d/vscodium.list
+RUN echo 'deb https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/debs/ vscodium main' | tee --append /etc/apt/sources.list.d/vscodium.list 
 
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 
@@ -24,7 +28,14 @@ RUN apt update
 
 RUN apt install -y codium docker-ce-cli
 
-RUN apt-get install libx11-xcb1 libasound2 -y #lib to visuel
+RUN curl -L https://go.microsoft.com/fwlink/?LinkID=760868 -o ./code.deb
+
+RUN apt install ./code.deb
+
+RUN rm ./code.deb
+
+# Other necessary lib
+RUN apt install libx11-xcb1 libxcb-dri3-0 libdrm2 libgbm1 libasound2 -y
 
 ARG UID="4000"
 
@@ -34,9 +45,9 @@ ARG USERNAME=developer
 
 RUN groupadd -g ${GID} ${USERNAME}
 
-RUN useradd -m ${USERNAME} -u ${UID} -g ${USERNAME}
+RUN useradd -m ${USERNAME} -u ${UID} -g ${USERNAME} -s /bin/bash
 
-WORKDIR /home/${USERNAME}/code
+RUN echo "${USERNAME}    ALL=(ALL) ALL" >> /etc/sudoers
 
 ARG WEB_APP="0"
 
@@ -54,13 +65,13 @@ ARG CONF=./conf
 
 COPY $CONF /tmp/conf
 
-RUN if [ -f /tmp/conf/packagesDef ]; then cat /tmp/conf/packagesDef >> /tmp/conf/packages ; fi
+RUN if [ -f /tmp/conf/packagesDef ]; then cat /tmp/conf/packagesDef | tee --append /tmp/conf/packages ; fi
 
-RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ -f /tmp/conf/packagesWeb ]; then cat /tmp/conf/packagesWeb >> /tmp/conf/packages ; fi
+RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ -f /tmp/conf/packagesWeb ]; then cat /tmp/conf/packagesWeb | tee --append /tmp/conf/packages ; fi
 
-RUN if [ "$FRONT_JS_FRAMEWORK" = "1" -a -f /tmp/conf/packagesJsFram ]; then cat /tmp/conf/packagesJsFram >> /tmp/conf/packages; fi
+RUN if [ "$FRONT_JS_FRAMEWORK" = "1" -a -f /tmp/conf/packagesJsFram ]; then cat /tmp/conf/packagesJsFram | tee --append /tmp/conf/packages; fi
 
-RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then cat /tmp/conf/packagesWeb >> /tmp/conf/packages ; fi
+RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then cat /tmp/conf/packagesWeb | tee --append /tmp/conf/packages ; fi
 
 COPY ./run_root.sh run_root.sh
 
@@ -76,7 +87,11 @@ USER ${USERNAME}
 
 RUN if [ -f /tmp/conf/keybindings.json ]; then cp /tmp/conf/keybindings.json /home/${USERNAME}/.config/Code/User/; fi
 
-RUN if [ -f /tmp/conf/packages ]; then while read package; do codium --install-extension $package; done </tmp/conf/packages; fi
+# RUN mkdir -p /home/${USERNAME}/.vscode/extensions/
+
+ARG VSCODE="codium"
+
+RUN if [ -f /tmp/conf/packages ]; then for package in $(cat /tmp/conf/packages); do eval "${VSCODE} --install-extension $package"; if [ "$?" -ne "0" ]; then exit 1; fi; done; fi
 
 USER root
 
@@ -100,4 +115,12 @@ ARG DEBUG_CONTAINER="debug_container"
 
 ENV DEBUG_CONTAINER=${DEBUG_CONTAINER}
 
-ENTRYPOINT codium --wait ${PATH_OPEN}
+WORKDIR /home/${USERNAME}/code
+
+ARG PATH_OPEN="./"
+
+ENV PATH_OPEN=${PATH_OPEN}
+
+ENV VSCODE=${VSCODE}
+
+ENTRYPOINT eval "GTK_THEME=Adwaita:dark ${VSCODE} --wait ${PATH_OPEN}"

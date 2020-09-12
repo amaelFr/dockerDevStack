@@ -1,0 +1,29 @@
+version: "3"
+services:
+    vscode:
+        build:
+            context: ./vscode
+            dockerfile: ../../vscode/Dockerfile
+            args:
+                # IMG: php:fpm
+                # CONF: conf
+                VSCODE: code
+                RUN_ROOT: bash run_root.sh ${MYSQL}
+                RUN_USER:
+                PATH_OPEN: ${PATH_OPEN}
+                WEB_APP: 0
+                FRONT_JS_FRAMEWORK: ${FRONT_JS_FRAMEWORK}
+                TYPE_SCRIPT: ${TYPE_SCRIPT}
+                UID: ${HOST_UID}
+                GID: ${HOST_GID}
+        container_name: vscode_container_${STACK_NAME}
+        hostname: vscode
+        environment:
+            DISPLAY: unix${DISPLAY}
+            DEBUGHOST: debug_container_${STACK_NAME}
+            # PATH_OPEN: ${PATH_OPEN}
+            MYSQL: mysql_container_${STACK_NAME}
+        volumes:
+            - ${CODE_PATH}:/home/${USERNAME}/code
+            - /tmp/.X11-unix:/tmp/.X11-unix
+        privileged: true #to fork
