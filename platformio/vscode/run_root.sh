@@ -1,3 +1,3 @@
 #/bin/bash
 
-apt install python-requests python3-distutils -y
+apt install python3-distutils -y
