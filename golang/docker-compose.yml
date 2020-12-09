@@ -7,6 +7,7 @@ services:
             args:
                 IMG: golang:buster
                 # CONF: conf
+                VSCODE: code
                 RUN_ROOT: bash run_root.sh ${MYSQL}
                 RUN_USER:
                 PATH_OPEN: ${PATH_OPEN}
@@ -16,7 +17,7 @@ services:
                 UID: ${HOST_UID}
                 GID: ${HOST_GID}
         container_name: vscode_container_${STACK_NAME}
-        hostname: vscode_php
+        hostname: vscode
         # links:
         #     - debug
         #     - mysql
@@ -31,22 +32,22 @@ services:
             - ${CODE_PATH}:/home/${USERNAME}/code
             - /tmp/.X11-unix:/tmp/.X11-unix
         privileged: true
-    debug:
-        build:
-            context: ./debug
-            dockerfile: Dockerfile
-            args:
-                MYSQL: ${MYSQL}
-        restart: always
-        container_name: debug_container_${STACK_NAME}
-        # environment:
-        volumes:
-            - ${CODE_PATH}/${GO_PATH}:/go/src
-        # links:
-        #     - mysql
-        # networks:
-        #     - backend
-        privileged: true
+    # debug:
+    #     build:
+    #         context: ./debug
+    #         dockerfile: Dockerfile
+    #         args:
+    #             MYSQL: ${MYSQL}
+    #     restart: always
+    #     container_name: debug_container_${STACK_NAME}
+    #     # environment:
+    #     volumes:
+    #         - ${CODE_PATH}/${GO_PATH}:/usr/local/go
+    #     # links:
+    #     #     - mysql
+    #     # networks:
+    #     #     - backend
+    #     privileged: true
     # front-dev:
     #     build:
     #         context: ./..

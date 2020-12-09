@@ -45,7 +45,7 @@ ARG USERNAME=developer
 
 RUN groupadd -g ${GID} ${USERNAME}
 
-RUN useradd -m ${USERNAME} -u ${UID} -g ${USERNAME} -s /bin/bash
+RUN useradd -m -s /usr/bin/bash -u ${UID} -g ${USERNAME} ${USERNAME}
 
 RUN echo "${USERNAME}    ALL=(ALL) ALL" >> /etc/sudoers
 
@@ -65,6 +65,8 @@ ARG CONF=./conf
 
 COPY $CONF /tmp/conf
 
+WORKDIR /tmp/conf
+
 RUN if [ -f /tmp/conf/packagesDef ]; then cat /tmp/conf/packagesDef | tee --append /tmp/conf/packages ; fi
 
 RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ -f /tmp/conf/packagesWeb ]; then cat /tmp/conf/packagesWeb | tee --append /tmp/conf/packages ; fi
@@ -73,13 +75,9 @@ RUN if [ "$FRONT_JS_FRAMEWORK" = "1" -a -f /tmp/conf/packagesJsFram ]; then cat 
 
 RUN if [ "$WEB_APP" = "1" -o "$FRONT_JS_FRAMEWORK" = "1" ] && [ "$TYPE_SCRIPT" = "1" ]; then cat /tmp/conf/packagesWeb | tee --append /tmp/conf/packages ; fi
 
-COPY ./run_root.sh run_root.sh
-
 ARG RUN_ROOT=""
 
-RUN if [ "$RUN_ROOT" = "" ]; then bash run_root.sh; else $RUN_ROOT; fi
-
-RUN rm run_root.sh
+RUN if [ "$RUN_ROOT" = "" ] && [ -f /tmp/conf/run_root.sh ]; then bash /tmp/conf/run_root.sh; else $RUN_ROOT; fi
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -95,19 +93,15 @@ RUN if [ -f /tmp/conf/packages ]; then for package in $(cat /tmp/conf/packages);
 
 USER root
 
-RUN rm -rf /tmp/conf
-
 USER ${USERNAME}
-
-COPY --chown=${USERNAME} ./run_user.sh run_user.sh
 
 ARG RUN_USER=""
 
-RUN if [ "$RUN_USER" = "" ]; then bash run_user.sh; else $RUN_USER; fi
+RUN if [ "$RUN_USER" = "" ] && [ -f /tmp/conf/run_user.sh ]; then bash /tmp/conf/run_user.sh; else $RUN_USER; fi
 
 USER root
 
-RUN rm run_user.sh
+RUN rm -rf /tmp/conf
 
 USER ${USERNAME}
 

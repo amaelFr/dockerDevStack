@@ -1,7 +1,7 @@
-FROM
+FROM golang
 
 RUN go get github.com/derekparker/delve/cmd/dlv
 
-WORKDIR /go/src/
+WORKDIR /go/src
 
-CMD [ "dlv", "debug", "main.go", "--listen=0.0.0.0", "--headless=true", "--api-version=2", "--log" ]
+CMD [ "dlv", "debug", "/usr/local/go/src/main.go", "--listen=0.0.0.0", "--headless=true", "--api-version=2", "--log" ]

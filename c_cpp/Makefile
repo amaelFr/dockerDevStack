@@ -49,36 +49,13 @@ PROJECT_NAME = $$(dirname $(PROJECT_NAME))
 endif
 
 UP_ARG = vscode
-# debug vscode nginx
-
-ifeq ($(FRONT_JS_FRAMEWORK),1)
-UP_ARG += front-dev
-WEB_APP=1
-endif
-
-ifeq ($(MYSQL),1)
-ifeq ($(OTHERDB),1)
-
-$(error You must inter only one database)
-endif
-endif
-
-ifeq ($(DUMP),)
-DUMP=/tmp/dump
-endif
-
-$(info $(DUMP))
-
-ifeq ($(MYSQL),1)
-UP_ARG += mysql
-endif
 
 ifeq ($(USERNAME),)
 USERNAME=developer
 endif
 
 ifeq ($(PATH_OPEN),)
-PATH_OPEN="./"
+PATH_OPEN=./
 endif
 
 export
